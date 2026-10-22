@@ -1,0 +1,220 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoodShare - Food Waste Redistribution Portal</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f8f5;
+            color: #24352a;
+        }
+        header {
+            background: #176b45;
+            color: white;
+            padding: 28px 6%;
+        }
+        header h1 { margin: 0 0 8px; }
+        main { max-width: 1150px; margin: 25px auto; padding: 0 18px; }
+        .stats, .food-list {
+            display: grid;
+            gap: 15px;
+        }
+        .stats { grid-template-columns: repeat(4, 1fr); margin: 20px 0 30px; }
+        .stat, .food-card, .form-box {
+            background: white;
+            padding: 18px;
+            border: 1px solid #dce7df;
+            border-radius: 12px;
+        }
+        .stat span { color: #617267; }
+        .stat strong { display: block; font-size: 30px; color: #176b45; }
+        .food-list { grid-template-columns: repeat(2, 1fr); }
+        .food-card h3 { margin: 0 0 5px; }
+        .source { color: #65756a; margin-top: 0; }
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .Available { background: #dff5e6; color: #17643b; }
+        .Reserved { background: #fff0c7; color: #805900; }
+        .Collected { background: #e1edff; color: #24569a; }
+        .Redistributed { background: #eee3ff; color: #6337a0; }
+        .details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 15px;
+        }
+        .details div { border-top: 1px solid #edf1ed; padding-top: 8px; overflow-wrap: anywhere; }
+        .details small { display: block; color: #647469; margin-bottom: 4px; }
+        .toolbar { display: flex; gap: 10px; margin: 15px 0; }
+        input, select, button {
+            font: inherit;
+            padding: 11px;
+            border: 1px solid #cbd8ce;
+            border-radius: 7px;
+            min-width: 0;
+        }
+        .toolbar input { flex: 1; }
+        .form-box { margin-top: 28px; }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        button { background: #176b45; color: white; cursor: pointer; border: 0; }
+        footer { text-align: center; padding: 25px; color: #65756a; }
+        @media(max-width: 700px) {
+            .stats { grid-template-columns: repeat(2, 1fr); }
+            .food-list { grid-template-columns: 1fr; }
+            .form-grid { grid-template-columns: 1fr 1fr; }
+        }
+        @media(max-width: 450px) {
+            .details, .form-grid { grid-template-columns: 1fr; }
+            .toolbar { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>FoodShare</h1>
+    <p>Food Waste Tracking and Redistribution Portal</p>
+    <p>Connect surplus food with community organizations before it goes to waste.</p>
+</header>
+
+<main>
+    <h2>Redistribution Status Dashboard</h2>
+    <section class="stats">
+        <div class="stat"><span>Available</span><strong id="availableCount">0</strong></div>
+        <div class="stat"><span>Reserved</span><strong id="reservedCount">0</strong></div>
+        <div class="stat"><span>Collected</span><strong id="collectedCount">0</strong></div>
+        <div class="stat"><span>Redistributed</span><strong id="redistributedCount">0</strong></div>
+    </section>
+
+    <p id="totalQuantity"></p>
+
+    <h2>Surplus Food Listings</h2>
+    <div class="toolbar">
+        <input id="searchInput" placeholder="Search food, source, location or organization">
+        <select id="statusFilter">
+            <option>All</option>
+            <option>Available</option>
+            <option>Reserved</option>
+            <option>Collected</option>
+            <option>Redistributed</option>
+        </select>
+    </div>
+    <section id="foodList" class="food-list"></section>
+
+    <section class="form-box">
+        <h2>Publish a Collection Update</h2>
+        <p>This demonstration form adds a listing to the current browser session.</p>
+        <form id="foodForm" class="form-grid">
+            <input id="foodName" placeholder="Food item" required>
+            <input id="source" placeholder="Restaurant / university canteen" required>
+            <input id="quantity" type="number" min="1" placeholder="Quantity (servings)" required>
+            <input id="deadline" type="datetime-local" required>
+            <input id="pickup" placeholder="Pickup location" required>
+            <input id="organization" placeholder="Participating organization" required>
+            <select id="newStatus">
+                <option>Available</option>
+                <option>Reserved</option>
+                <option>Collected</option>
+                <option>Redistributed</option>
+            </select>
+            <button type="submit">Add Food Listing</button>
+        </form>
+    </section>
+</main>
+
+<footer>FoodShare | University and Community Food Recovery</footer>
+
+<script>
+const records = [
+    {food:"Vegetable Rice Meals",source:"Green Bowl Restaurant",quantity:45,deadline:"2026-10-22T14:30",pickup:"Main Street, near City Library",organization:"Community Meal Network",status:"Available"},
+    {food:"Fresh Bread and Buns",source:"University Central Canteen",quantity:32,deadline:"2026-10-22T16:00",pickup:"University Gate 2",organization:"Campus Volunteer Group",status:"Reserved"},
+    {food:"Mixed Fruit Boxes",source:"North Campus Cafe",quantity:18,deadline:"2026-10-22T15:00",pickup:"North Campus loading bay",organization:"Neighbourhood Care Trust",status:"Collected"},
+    {food:"Packed Lunch Boxes",source:"Sunrise Family Restaurant",quantity:26,deadline:"2026-10-22T13:45",pickup:"Market Road entrance",organization:"Community Meal Network",status:"Redistributed"},
+    {food:"Vegetable Sandwiches",source:"University Library Cafe",quantity:20,deadline:"2026-10-22T17:00",pickup:"Library service counter",organization:"Student Outreach Society",status:"Available"},
+    {food:"Cooked Lentil Rice",source:"Lakeview Dining Hall",quantity:38,deadline:"2026-10-22T14:00",pickup:"Dining Hall rear entrance",organization:"Neighbourhood Care Trust",status:"Available"}
+];
+
+function safe(value) {
+    return String(value).replace(/[&<>"']/g, char => ({
+        "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+    }[char]));
+}
+
+function renderRecords() {
+    const filter = document.getElementById("statusFilter").value;
+    const query = document.getElementById("searchInput").value.toLowerCase().trim();
+
+    const filtered = records.filter(record => {
+        const matchesStatus = filter === "All" || record.status === filter;
+        const searchable = [
+            record.food, record.source, record.pickup,
+            record.organization, record.status
+        ].join(" ").toLowerCase();
+        return matchesStatus && searchable.includes(query);
+    });
+
+    document.getElementById("foodList").innerHTML = filtered.length
+        ? filtered.map(record => `
+            <article class="food-card">
+                <h3>${safe(record.food)}</h3>
+                <p class="source">${safe(record.source)}</p>
+                <span class="badge ${safe(record.status)}">${safe(record.status)}</span>
+                <div class="details">
+                    <div><small>Available Quantity</small><b>${safe(record.quantity)} servings</b></div>
+                    <div><small>Collection Deadline</small><b>${safe(new Date(record.deadline).toLocaleString())}</b></div>
+                    <div><small>Pickup Location</small><b>${safe(record.pickup)}</b></div>
+                    <div><small>Participating Organization</small><b>${safe(record.organization)}</b></div>
+                </div>
+            </article>
+        `).join("")
+        : "<p>No matching food records found.</p>";
+
+    ["Available", "Reserved", "Collected", "Redistributed"].forEach(status => {
+        const count = records.filter(record => record.status === status).length;
+        document.getElementById(status.toLowerCase() + "Count").textContent = count;
+    });
+
+    const availableQuantity = records
+        .filter(record => record.status === "Available")
+        .reduce((total, record) => total + Number(record.quantity), 0);
+
+    document.getElementById("totalQuantity").textContent =
+        "Estimated quantity available for collection: " + availableQuantity + " servings";
+}
+
+document.getElementById("searchInput").addEventListener("input", renderRecords);
+document.getElementById("statusFilter").addEventListener("change", renderRecords);
+
+document.getElementById("foodForm").addEventListener("submit", event => {
+    event.preventDefault();
+    records.unshift({
+        food: document.getElementById("foodName").value.trim(),
+        source: document.getElementById("source").value.trim(),
+        quantity: Number(document.getElementById("quantity").value),
+        deadline: document.getElementById("deadline").value,
+        pickup: document.getElementById("pickup").value.trim(),
+        organization: document.getElementById("organization").value.trim(),
+        status: document.getElementById("newStatus").value
+    });
+    event.target.reset();
+    renderRecords();
+    alert("Food listing added for this browser session.");
+});
+
+renderRecords();
+</script>
+</body>
+</html>
