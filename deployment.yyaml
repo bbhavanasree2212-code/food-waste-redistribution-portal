@@ -1,0 +1,66 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: food-waste-portal
+  labels:
+    app: food-waste-portal
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: food-waste-portal
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: food-waste-portal
+    spec:
+      containers:
+        - name: food-waste-portal
+          image: bbhavanasree/food-waste-portal:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: food-waste-portal
+spec:
+  type: NodePort
+  selector:
+    app: food-waste-portal
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      nodePort: 30088
